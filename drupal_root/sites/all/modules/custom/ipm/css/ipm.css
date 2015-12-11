@@ -1,0 +1,198 @@
+@CHARSET "UTF-8";
+
+#block-menu-menu-administration-menu {clear:both; width:100%;min-height:20px;}
+#block-menu-menu-administration-menu ul.menu {list-style-type:none; float:right;}
+#block-menu-menu-administration-menu ul.menu li {display:inline-block; }
+#block-menu-menu-administration-menu ul.menu li a{border-right:1px solid #000; padding-right:10px;}
+#block-menu-menu-administration-menu ul.menu li.last a{border-right: none;}
+
+.rotate {/* Safari */-webkit-transform: rotate(-90deg);
+/* Firefox */-moz-transform: rotate(-90deg);
+/* IE */-ms-transform: rotate(-90deg);
+/* Opera */-o-transform: rotate(-90deg);
+/* Internet Explorer */filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);}
+.nowrap{white-space:nowrap;}
+
+#notification_matrix {cursor:pointer;}
+#notification_matrix tr th{height:200px;vertical-align:bottom;}
+#notification_matrix tr th div {width:25px;padding:10px 0;}
+#notification_matrix tr td.active{background-color:green;}
+#busy_icon{background:#ffffff url('/sites/all/modules/custom/ipm/images/busy.gif') no-repeat center center;
+display:none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:1000;opacity:0.5;}
+#tcga-data-form{border-right:1px solid #ccc;}
+
+
+/*------------- Search repository old page -----------------*/
+.page-search-repository-old #sidebar-first{width:150px;}
+.page-search-repository-old #content{width:810px;}
+
+ul#search_repository_diseases{list-style-type:none;}
+ul#search_repository_diseases li{padding:5px 0;border-bottom:1px dotted #ddd;}
+.submit_button input{float:right;margin-left:10px;}
+.submit_button h2{display:inline-block;margin:0;padding:0;}
+
+.search-repository {width:auto}
+.search-repository tr td,
+.search-repository tr th{text-align:center;padding:0;margin:0;}
+
+#search-repository-header{background-color:rgba(0, 0, 0, 0.51);margin-top:10px;width:auto;display:block;float:left;}
+#search-repository-header div.header-col{display:inline-block;}
+#search-repository-header div.header-col.empty-col{width:130px;background-color:#fff;vertical-align:top;height:440px;padding-top:14px;}
+
+
+#search-repository-header .colspan-1,
+#search-repository-header .colspan-2,
+#search-repository-header .colspan-3{
+	height:200px;
+	border:1px #fff solid;
+	padding:2px;
+	display:inline-block;
+}
+
+#search-repository-header .colspan-1{width:40px;}
+#search-repository-header .colspan-2{width:86px;}
+#search-repository-header .colspan-3{width:130px;}
+
+#search-repository-header .level{
+	text-align:center;
+    border:1px #fff solid;
+    line-height:40px;width:44px;
+    display:inline-block;
+    cursor:pointer;}
+#search-repository-header .platform,
+#search-repository-header .datatype{
+	writing-mode: tb-rl;   
+	-webkit-transform:rotate(270deg);
+    -moz-transform:rotate(270deg);
+    -o-transform: rotate(27deg);
+    white-space:nowrap;
+    cursor:pointer;
+}
+
+#search-repository-header .colspan-1 .platform,
+#search-repository-header .colspan-1 .datatype{margin-top:150px;}
+#search-repository-header .colspan-2 .platform,
+#search-repository-header .colspan-2 .datatype{margin-top:130px;}
+#search-repository-header .colspan-3 .platform,
+#search-repository-header .colspan-3 .datatype{margin-top:80px;}
+
+#search-repository-header .ispublic-no{color:red;}
+
+table#search-repository-data{margin:0;}
+table#search-repository-data td.data-available.yes{background-color:#56c056;cursor:pointer;}
+table#search-repository-data td.data-available.selected{background-color:#008000;}
+table#search-repository-data th.sample-barcode{width:130px;cursor:pointer;}
+table#search-repository-data td.data-available{width:44px;}
+table#search-repository-data tr{height:44px;line-height:40px;}
+
+#search-repository-data-wrapper{height:500px;overflow-y:scroll;float:left;clear:both;}
+#search-repository-page{clear:both;text-align:center;padding:25px 15px;}
+#search-repository-page a, 
+#search-repository-page span{width:30px;padding:7px 0;margin:1px;border:1px solid #ccc;display:inline-block;font-size:10px;}
+#search-repository-page span.active{background-color:#f5f5f5;}
+
+.search-repository-result{margin:10px 0;background-color:#ccc;padding:5px;}
+
+/*------------- Search repository new page -----------------*/
+#search_repository_filters .sb_wrapper{
+	margin:0 0 10px 0;
+	padding:0;
+	position:relative;
+}
+
+#search_repository_filters .sb_wrapper #date_picker{
+	width:100px;
+	padding:4px;
+	margin-right:5px;
+	border: 1px solid #CCC;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	margin-top:5px;
+	background-color:#fff;
+}
+
+#search_repository_filters #snapshot_by_date_filter img{vertical-align:middle;margin-left:2px;cursor:pointer;}
+
+#search_repository_filters .sb_wrapper .sb_input{
+	min-height:16px;
+	max-height:100px;
+	width:160px;
+	overflow-y: auto;
+	padding:4px;
+	border: 1px solid #CCC;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	margin-top:5px;
+	background-color:#fff;
+}
+
+#search_repository_filters ul.sb_dropdown{
+	display:none;
+	min-width:150px;
+	position:absolute;
+	list-style:none;
+	padding:10px;
+	z-index:100;	
+	background-color: #F6F6F2;
+	background-repeat: no-repeat;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#F9F9F9), color-stop(25%, #F9F9F9), to(#F6F6F2));
+	background-image: -webkit-linear-gradient(#F9F9F9, #F9F9F9 25%, #F6F6F2);
+	background-image: -moz-linear-gradient(top, #F9F9F9, #F9F9F9 25%, #F6F6F2);
+	background-image: -ms-linear-gradient(#F9F9F9, #fff#F9F9F9fff 25%, #F6F6F2);
+	background-image: -o-linear-gradient(#F9F9F9, #F9F9F9 25%, #F6F6F2);
+	background-image: linear-gradient(#F9F9F9, #F9F9F9 25%, #F6F6F2);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F9F9F9', endColorstr='#e6e6e6', GradientType=0);
+	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+	line-height: normal;
+	border: 1px solid #ccc;
+	border-bottom-color: #bbb;
+	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+	-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+	-webkit-transition: 0.1s linear background-image;
+	-moz-transition: 0.1s linear background-image;
+	-ms-transition: 0.1s linear background-image;
+	-o-transition: 0.1s linear background-image;
+	transition: 0.1s linear background-image;
+	overflow: visible;	
+}
+
+#search_repository_filters #reference_genome_filter ul.sb_dropdown,
+#search_repository_filters #analysis_type_filter ul.sb_dropdown{width:250px;}
+
+#search_repository_filters #platform_filter ul.sb_dropdown,
+#search_repository_filters #sample_type_filter ul.sb_dropdown{width:300px;}
+
+#search_repository_filters #analyte_type_filter ul.sb_dropdown,
+#search_repository_filters #tissue_source_site_filter ul.sb_dropdown{width:450px;}
+#search_repository_filters #tissue_source_site_filter ul.sb_dropdown li{width:50%;float:left;}
+
+
+
+#search_repository_filters ul.sb_dropdown li{
+	padding:3px 0;
+}
+#search_repository_filters ul.sb_dropdown li input[type="checkbox"]{
+	float:left;
+	margin:2px 5px;
+}
+#search_repository_filters input[type="button"]{
+	margin-top:10px;
+}
+
+#selected_filters span{border-bottom: 1px dotted #222;margin-left:20px;}
+#search_results{width:700px;overflow-x:auto;}
+#search_results table th{font:11px arial,sans-serif;}
+#search_results table tr td{white-space:nowrap; font:11px arial,sans-serif;}
+
+#search_repository_download{text-align:right;position:relative;}
+#search_repository_download_settings{margin-left:5px;vertical-align:middle;}
+#search_repository_download_settings_content{display:none;text-align:left; padding:10px;position:absolute;right:0px;top:40px; border:1px solid #CCCCCC; background-color:#fff;z-index:100;}
+#search_repository_download_settings_content input{margin-right:5px; vertical-align:middle;}
+#search_repository_download_notice{font-style:italic; color:red;text-align:left;}
+
+
+
+

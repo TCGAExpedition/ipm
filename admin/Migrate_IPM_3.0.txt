@@ -1,0 +1,214 @@
+==========================  05/12/2014 =================================
+U    modules/custom/ipm/my-notifications.page.inc
+U    modules/custom/ipm/search-repository-old.page.inc
+U    modules/custom/ipm/css/ipm.css
+A    modules/custom/ipm/images/calendar-Icon.png
+A    modules/custom/ipm/images/settings-icon.png
+A    modules/custom/ipm/search
+A    modules/custom/ipm/search/SearchBox.zip
+A    modules/custom/ipm/search/click.png
+A    modules/custom/ipm/search/css
+A    modules/custom/ipm/search/css/style.css
+A    modules/custom/ipm/search/index.html
+A    modules/custom/ipm/search/icons
+A    modules/custom/ipm/search/icons/up.png
+A    modules/custom/ipm/search/icons/search.png
+A    modules/custom/ipm/search/icons/down.png
+A    modules/custom/ipm/search/icons/IconsByGlyphish.txt
+U    modules/custom/ipm/search-repository.page.inc
+U    modules/custom/ipm/ipm.module
+U    modules/custom/ipm/js/search-repository.js
+A    modules/custom/ipm/common.php
+Updated to revision 22613.
+
+add "search-repository" to project
+delete basic page
+configure block
+
+=======================================================================================================================
+Updates to Install a Wikitools based wiki package:
+----------------------------------------------
+4 contrib modules were added to svn.
+Project wikitools (7.x-1.0-alpha1)
+Project freelinking (7.x-3.1)
+Project pathauto (7.x-1.2) 
+Project token (7.x-1.5)
+
+If needed enable modules and run db update.
+
+UI Config:
+Create the Content type:
+	Click the menu:  Structure->Content Types->Add content types
+			Select Add Content Type link
+			Name: Wiki Page
+			Desc: Wiki Pages
+			Title filed Label: Wiki
+			In comments setting choose closed
+			In Menu Settings select Main menu (default)
+			Choose Save Content Type
+		
+
+
+Update ContentAuthoring:
+	In Menu: Configuarion->ContentAuthoring->Text Formats-> Filtered HTML: (/config/content/formats/filtered_html)
+			Under Enabled filters Check Freelinking
+		 	(Freelinking should pop into the top of the Filter processing order list)
+			Select Save
+
+	In Menu: Configuarion->ContentAuthoring->Text Formats-> Full HTML: (/config/content/formats/full_html)
+			Under Enabled filters Check Freelinking
+			Select Save
+
+Set Freelinking config: 	
+	In Menu: Configuarion->Freelinking Settings (config/content/freelinking)
+			Set "Plugin to use when not indicated in the freelink" to Path
+			"Match Syntax Mode" left default as Standard
+		Under "Nodetitle Plugin Settings"
+			Set "Restrict freelinks to this content type" to Wiki Page
+			SEt "If a suitable content is not found" to Do Notihng
+		Under Path Plugin Settings:
+			Set Starting Path for Relative Links to wiki
+		Under Plugin Fallback Action
+			Set to "Use Plugin nodetitle"
+
+
+
+
+Set Wikitools Config: 	
+	In Menu: Configuarion->Wikitools (/config/wikitools)
+			Set Wiki path to: wiki
+			Set Title of main page to: TCGA Wiki
+			Set Wiki node types to: Wiki Page
+	
+	Under Options Check these 4:
+			 Node Creation: Let users create new nodes when they type in a node name which does not exist.
+			 Unique Titles: Enforce that titles of new nodes are different from existing ones.
+			 Move Protection: Disallow change of node titles for users without administer nodes permission.
+			 Treat dashes as spaces when looking for node titles.
+
+	Under Wiki 404 Type check Creation form only
+
+	Check Hijack freelinking filter
+
+
+Add image capability to Wiki pages:
+
+    In Menu: Structure->Content Types->Wiki Page->Manage Fields
+
+		Add a new field
+			Label:Wiki Image
+			Type:Image
+			Widget:Image
+		Click "Save"
+		Click "Save Field Settings"
+
+		Change "Number of Values" to Unlimited
+		Click "Save"
+		Click "Save"
+
+
+	In Menu: Structure->Content Types->Wiki Page->Manage Display
+		Change both "Wiki Image" LABEL and FORMAT to <Hidden>
+		Click "Save"
+
+=======================================================================================================================
+
+
+Add a link to the PGRR Wiki:
+-----------------------------
+
+in sites/modules/custom/ipm/  do a "svn up"
+
+In the UI manually:
+
+Click the menu:  Structure->Content Types->Project->Manage Fields
+	add new field
+		label:Documentation
+		machine name:field_documentation
+		field type:link
+		widget:link
+		
+		Order new field below "Requests (For Project Lead)" and above "Contact"
+
+		Save
+		
+Edit the new field to set "Number of values" to "unlimited" and Save.
+		
+Click the menu: Structure->Content Types->Project->Manage Display
+	set "Documentation" Format to "Hidden"
+
+Go to view all Content (Click top level Content menu).  Edit the content titled "TCGA".
+Under the Documentation section add two items:
+	title: TCGA Wiki URL: wiki
+	title: GO Documentation URL: go-index
+ Under the "Access Data" section remove the GO Documentation item, by blanking the title and URL fields, then Save.
+
+=======================================================================================================================
+
+Updates for the search repository page.
+
+To update the tcga data menu page:
+Edit the Project that defines the TCGA Data Page
+http://ipmdev.dbmi.pitt.edu/tcga-data#overlay=node/10/edit%3Fdestination%3Dadmin/dashboard%253Frender%253Doverlay
+(Or  search content for tcga Data page and select edit)
+
+	FOR NOW, DON'T DO THIS!!--->In the section for the "Search Repository" link,  change 'node56' to 'search-repository'
+	INSTEAD remove this link by blanking the fields for this link and ordering it at the bottom of the list.
+	When the link is eventually put back add an "Access Data" item with Title:Search Repository and URL:search-repository
+
+Add the search filter to the LHS of the search repository page:
+	Go to the blocks page (structure-> blocks)
+	Set the Search Repository Filters to appear in Sidebar First
+	Save Blocks
+	Go to Search Repository Filters -> configure
+		Under Show block on specific pages
+		check 'Only the listed pages'
+		and enter the page: search-repository
+		For the Title enter "Filters"
+
+=======================================================================================================================
+
+Add three wiki pages:
+
+
+
+Replace the first page with the following HTML (edit/add in plain text, then switch to Full HTML)
+______________________________________________________________________________________________________________
+
+<div id="container" style="width:800px">
+	<div id="menu" style="background-color:#F9EE70;width:190px; height:290px; float:left; padding-top:10px; padding-left:10px;">
+		<span style="font-size:14px;"><span style="font-family: arial,helvetica,sans-serif;">[[Variant Analysis]]<br />
+		[[THCA]]</span></span></div>
+	<div id="content" style="background-color: rgb(238, 238, 238); width: 590px; height:290px; float: left; padding-top:10px; padding-left:10px;">
+		<p><span style="font-size:12px;"><span style="font-family: arial,helvetica,sans-serif;">The Cancer Genome Atlas (TCGA) is a comprehensive and coordinated effort to accelerate the understanding of the molecular basis of cancer through the application of genome analysis technologies, including large-scale genome sequencing. The overarching goal of TCGA is to improve our ability to diagnose, treat and prevent cancer.</span></span></p>
+		<p><span style="font-size:12px;"><span style="font-family: arial,helvetica,sans-serif;">To achieve this goal in a scientifically rigorous manner, the&nbsp;<a href=" http:=" www.cancer.gov=" ">National Cancer Institute (NCI)&nbsp;and the&nbsp;</a><a href="http://www.genome.gov/">National Human Genome Research Institute (NHGRI)</a>] used a phased-in strategy to launch TCGA. A pilot project developed and tested the research framework needed to systematically explore the entire spectrum of genomic changes involved in more than 20 types of human cancer.</span></span></p>
+		<p><span style="font-size:12px;"><span style="font-family: arial,helvetica,sans-serif;">For more details you can visit this link (<a href="https://wiki.nci.nih.gov/display/TCGA/Introduction+to+TCGA">https://wiki.nci.nih.gov/display/TCGA/Introduction+to+TCGA</a>)</span></span></p>
+		<div style="clear:both;text-align:center;">
+			&nbsp;</div>
+	</div>
+</div>
+<p>&nbsp;</p>
+
+______________________________________________________________________________________________________________
+
+Switch to Full HTML, Save and click on "Variant Analysis", edit in plain text add the following:
+
+___________________________________________________________________________________________________________________________
+
+<p><span style="font-size:14px;"><span style="font-family: arial,helvetica,sans-serif;">Somatic variants in TCGA tumors samples are identified using multiple genome and exome data analysis pipelines. A pipeline is a series of sequential steps in analysis that are often bundled together and assigned a name. For example, some of the variant analysis pipelines used by TCGA are Broad Institute’s Mutect (1), UCSC’s Bambam and Baylor’s CARNAC. These pipelines are similar in overall workflow and have a series of steps which have similar objectives; however, the algorithms within each step may differ resulting in different outputs for the same dataset. A typical variant calling workflow is shown in the figure below and consists of aligning the sequence reads to a reference genome and then calling variants, both somatic and germ line.</span></span></p>
+<p><br />
+	<img alt="Variant Analysis Pipeline" src="/sites/default/files/va-pipeline.jpg" style="width: 712px; height: 445px; margin-left: 20px; margin-right: 20px;" />
+</p>
+<p><span style="font-size:14px;"><span style="font-family: arial,helvetica,sans-serif;">Variant may be called either on tumor alone, with consideration of normal calls built into the algorithm (as in Mutect) or calling tumor and normal variants separately and then performing a simple subtraction of normal from tumor to obtain somatic variants (as in samtools (2)). The output format for the variant callers is typically a .vcf file. Additional formats include gff3 and gv3. Within TCGA vcf files are protected files, i.e., not publicly available, and can contain hundreds of thousands of putative variants. Through a complex process of manual curation by tumor- type specific working groups, automatic curation and experimental validation, this large list of variants is reduced to a very short list of validated variants per tumor sample. The validated variants are publicly available in a .MAF file. This process is described in the following link. (https://www.biostars.org/p/69222/#89347). Briefly, each tumor type is sequenced in one sequencing center only and this center will generate variant calls using their own pipeline. In addition, other centers may also run their own pipelines on these datasets. However, we note that for tumors such as BRCA, GBM and OVCa, the initial variant calls performed using Mutect, samtools and other callers seem to have been replaced entirely by UCSC’s Bambam pipeline, i.e., the latter are the only ones available for download currently. The process of curation, and the concordance between UCSC’s Bam Bam pipeline and the initial pipelines and whether all variants in the MAF files are identified by UCSC’s Bambam caller has not been examined.</span></span></p>
+
+______________________________________________________________________________________________________________
+
+Switch to Full HTML Save and click on "THCA", edit in plain text add the following:
+
+______________________________________________________________________________________________________________
+
+<p><span style="font-size:14px;"><span style="font-family: arial,helvetica,sans-serif;">Somatic variants in TCGA tumors samples are identified using multiple genome and exome data analysis pipelines. A pipeline is a series of sequential steps in analysis that are often bundled together and assigned a name. For example, some of the variant analysis pipelines used by TCGA are Broad Institute’s Mutect (1), UCSC’s Bambam and Baylor’s CARNAC. These pipelines are similar in overall workflow and have a series of steps which have similar objectives; however, the algorithms within each step may differ resulting in different outputs for the same dataset. A typical variant calling workflow is shown in the figure below and consists of aligning the sequence reads to a reference genome and then calling variants, both somatic and germ line. Variant may be called either on tumor alone, with consideration of normal calls built into the algorithm (as in Mutect) or calling tumor and normal variants separately and then performing a simple subtraction of normal from tumor to obtain somatic variants (as in samtools (2)). The output format for the variant callers is typically a .vcf file. Additional formats include gff3 and gv3. Within TCGA vcf files are protected files, i.e., not publicly available, and can contain hundreds of thousands of putative variants. Through a complex process of manual curation by tumor- type specific working groups, automatic curation and experimental validation, this large list of variants is reduced to a very short list of validated variants per tumor sample. The validated variants are publicly available in a .MAF file. This process is described in the following link. (https://www.biostars.org/p/69222/#89347). Briefly, each tumor type is sequenced in one sequencing center only and this center will generate variant calls using their own pipeline. In addition, other centers may also run their own pipelines on these datasets. However, we note that for tumors such as BRCA, GBM and OVCa, the initial variant calls performed using Mutect, samtools and other callers seem to have been replaced entirely by UCSC’s Bambam pipeline, i.e., the latter are the only ones available for download currently. The process of curation, and the concordance between UCSC’s Bam Bam pipeline and the initial pipelines and whether all variants in the MAF files are identified by UCSC’s Bambam caller has not been examined.</span></span></p>
+
+______________________________________________________________________________________________________________
+
+Switch to Full HTML and Save

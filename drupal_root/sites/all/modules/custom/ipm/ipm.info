@@ -1,0 +1,9 @@
+name = Instistute for Personalized Medicine	
+description = a module for Instistute for Personalized Medicine	
+package = IPM
+core = 7.x
+version = "7.x-1.0"
+configure = admin/config/ipm/ws-server
+
+
+stylesheets[all][] = css/ipm.css

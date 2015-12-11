@@ -1,0 +1,678 @@
+<?php 
+/**
+ * The PGRR portal is a resource for sharing genomic data in a resource community.
+ * Copyright (C) 2015  University of Pittsburgh
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+ 
+function ipm_form_user_login_block_alter(&$form, &$form_state, $form_id){
+	$form['instruction'] = array(
+		'#markup' => 'Please log in using your University of Pittsburgh account',
+	);
+}
+
+function ipm_form_user_login_alter(&$form, &$form_state, $form_id){
+	$form['name']['#description'] = "";
+	$form['pass']['#description'] = "";	
+	$form['instruction'] = array(
+		'#markup' => 'Please log in using your University of Pittsburgh account',
+	);
+	$form['#submit'][0] = '_user_login_submit_alter';
+}
+
+function _user_login_submit_alter($form, &$form_state) {
+	global $user;
+	$user = user_load($form_state['uid']);
+	//redirect user to home page instead of user page
+	$form_state['redirect'] = 'home';
+
+	user_login_finalize($form_state);
+}
+
+function ipm_user_login(&$edit, $account){
+
+	//if it's the first time a user login
+	if ($account->access == 0) {
+		global $user;
+
+		//check if s/he has been approved to access tcga data
+		$result = db_select('ipm_access_tcga_approved', 'i')
+		->fields('i')
+		->condition('email', $user->mail,'=')
+		->execute()
+		->fetchAll();
+
+		//if the user has been granted permission to access tcga data,
+		//assign the proper role for the user and fill in the field_full_name
+		if(isset($result) && count($result) > 0){
+			$roles = user_roles(TRUE);
+			foreach ($result as $item){				
+				if($item->type == 'faculty'){
+					$role = 'TCGA PI';
+				}else{
+					$role = 'TCGA Member';
+				}
+				$rid = array_search($role, $roles);
+				if ($rid != FALSE) {
+					$user->roles[$rid] = $role;
+					$user->field_full_name['und'][0]['value'] = $item->name;
+					user_save($user);
+					//watchdog('New User Login', 'User name: %name, user access: %access, user login: %login', array('%name' => $account->name, '%access' => $account->access, '%login' => $account->login), WATCHDOG_DEBUG);
+				}
+			}
+		}
+	}
+}
+
+function ipm_form_pi_tcga_node_form_alter(&$form, &$form_state, $form_id){
+	drupal_set_title('Request Addition of University of Pittsburgh Faculty Member');
+	$form['title']['#default_value'] = 'Request Addition of University of Pittsburgh Faculty Member';
+	$form['title']['#access'] = FALSE;
+	$form['field_project']['#access'] = FALSE;
+	
+	global $user;
+	$project_id = $form['field_project']['und']['#default_value'][0];
+	$project = node_load($project_id);
+	
+	$project_lead = in_array('TCGA Project Lead', $user->roles) ? TRUE : FALSE;
+	//($project->field_group_lead['und'][0]['uid'] == $user->uid ? TRUE : FALSE);	
+	if(!isset($user->uid) || !$project_lead || !isset($form['nid']['#value'])){
+		$form['field_approved']['#access'] = FALSE;
+	}
+	
+	$form['instruction'] = array(
+		'#markup' => $project->field_instructions_addition_pi['und'][0]['value'],
+	);
+	//get rid of _none option
+	unset($form['field_approved']['und']['#options']['_none']);
+	$form['actions']['submit']['#submit'][] = 'ipm_form_redirect_handler';
+	$form['actions']['submit']['#value'] = 'Submit';
+	unset($form['actions']['preview']);
+	unset($form['actions']['preview_changes']);
+	unset($form['actions']['delete']);
+	
+	$redirect_url = parse_url($_SERVER['HTTP_REFERER']);
+	if($redirect_url['path'] == '/tcga-requests-for-project-lead'){
+		$_SESSION['redirect_url'] = 'tcga-requests-for-project-lead';
+	}else if($redirect_url['path'] == '/' || $redirect_url['path'] == '/home'){
+		$_SESSION['redirect_url'] = 'home';
+	}
+}
+
+
+function  ipm_form_tcga_member_not_pi_node_form_alter(&$form, &$form_state, $form_id){
+	drupal_set_title('Request Addition of Student, Postdoctoral Scholar, Postdoctoral Associate, or Staff Member');
+	$form['title']['#default_value'] = 'Request Addition of Student, Postdoctoral Scholar, Postdoctoral Associate, or Staff Member';
+	$form['title']['#access'] = FALSE;
+	$form['field_project']['#access'] = FALSE;
+	
+	global $user;
+	$project_id = $form['field_project']['und']['#default_value'][0];
+	$project = node_load($project_id);
+	
+	$project_lead = in_array('TCGA Project Lead', $user->roles) ? TRUE : FALSE;
+	//$project_lead = ($project->field_group_lead['und'][0]['uid'] == $user->uid ? TRUE : FALSE);
+	if(!isset($user->uid) || !$project_lead || !isset($form['nid']['#value'])){
+		$form['field_approved']['#access'] = FALSE;
+	}
+	
+	if(empty($form['field_pi']['und']['#default_value'] )){
+		$form['field_pi']['und']['#default_value'] = $user->uid;
+	}
+	$form['field_pi']['#access'] = FALSE;
+		
+	$form['instruction'] = array(
+		'#markup' => $project->field_instructions_not_pi['und'][0]['value'],
+	);
+
+	//get rid of _none option
+	unset($form['field_approved']['und']['#options']['_none']);
+	$form['actions']['submit']['#submit'][] = 'ipm_form_redirect_handler';
+	$form['actions']['submit']['#value'] = 'Submit';
+	unset($form['actions']['preview']);
+	unset($form['actions']['preview_changes']);
+	unset($form['actions']['delete']);
+	
+	$redirect_url = parse_url($_SERVER['HTTP_REFERER']);
+	if($redirect_url['path'] == '/tcga-requests-for-project-lead/student'){
+		$_SESSION['redirect_url'] = 'tcga-requests-for-project-lead/student';
+	}else if($redirect_url['path'] == '/tcga-data'){
+		$_SESSION['redirect_url'] = 'tcga-data';
+	}else if($redirect_url['path'] == '/tcga'){
+		$_SESSION['redirect_url'] = 'tcga';
+	}
+}
+
+
+function ipm_form_redirect_handler(&$form, &$form_state){
+	if(isset($_SESSION['redirect_url'])){
+		$form_state['redirect'] = $_SESSION['redirect_url'];
+		unset($_SESSION['redirect_url']);
+	}		
+}
+
+/**
+ * Implements hook_node_delete()
+ */
+function ipm_node_delete($node) {
+	if ($node->type == 'pi_tcga') {		
+		if(isset($node->field_approved['und'][0]['value']) && $node->field_approved['und'][0]['value'] == 1){
+			$language = language_default();
+			$module = 'ipm';
+			$to = $node->field_email["und"][0]["email"];
+			$project = node_load($node->field_project["und"][0]["nid"]);
+			$project_lead = user_load($project->field_group_lead["und"][0]['uid']);
+			
+			//remove record from database
+			remove_new_roles_delete_record_database($to, 'faculty');
+			email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $project_lead->field_full_name['und'][0]['value'], false);
+			
+			//sending confirmation emails
+			$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+			$message .= "Your access to the " . $project->title . " databset has been revoked. "
+			. "You will no longer be able to access this dataset. If this request is in error, please contact " . $project_lead->field_full_name['und'][0]['value']. ".";
+			$params = array('subject' => 'Removal of faculty to access dataset','message' => $message);
+			$result = drupal_mail($module, '', $to, $language, $params, '', TRUE);
+			if ($result['result'] == TRUE) {
+				drupal_set_message(t('Your message has been sent to %emailaddress.', array('%emailaddress'=>$to)));
+			} else {
+			drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
+			}
+		}	
+	}
+	
+	if ($node->type == 'tcga_member_not_pi') {		
+		if(isset($node->field_approved['und'][0]['value']) && $node->field_approved['und'][0]['value'] == 1){
+			$language = language_default();
+			$module = 'ipm';
+			$to = $node->field_email["und"][0]["email"];
+			$pi = user_load($node->field_pi['und'][0]['uid']);
+			$project = node_load($node->field_project["und"][0]["nid"]);
+			
+			//remove record from the database
+			remove_new_roles_delete_record_database($to, 'student');
+			email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $pi->field_full_name['und'][0]['value'], false);
+			
+			//sending confirmation emails			
+			$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+			$message .= $pi->field_full_name['und'][0]['value'] . " has requested your access to the " . $project->title . " dataset be revoked. " 
+					. "You will no longer be able to access this dataset. If this request is in error, please ask your supervising faculty member to request access for you again.";
+			$params = array('subject' => 'Removal of Student/ Staff to access dataset','message' => $message);
+			$to .= ', ' . $pi->mail;
+			$result = drupal_mail($module, '', $to, $language, $params, '', TRUE);
+			if ($result['result'] == TRUE) {
+				drupal_set_message(t('Your message has been sent to %emailaddress.', array('%emailaddress'=>$to)));
+			}
+			else {
+				drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
+			}
+			
+		}
+	}
+}
+
+
+/**
+ * Implements hook_node_submit()
+ */
+function ipm_node_submit($node, $form, &$form_state) {
+	
+	//Content type: TCGA Member (PI)
+	if($node->type == 'pi_tcga'){		
+		//sending email confirmation
+		$sent = FALSE;
+		$key = '';
+		$language = language_default();
+		$module = 'ipm';
+		$to = $node->field_email["und"][0]["email"];
+		$project = node_load($node->field_project["und"][0]["nid"]);
+		$project_lead = user_load($project->field_group_lead["und"][0]['uid']);
+		
+		if(!isset($node->nid)){		
+			//Request of Faculty Member to access Dataset			
+			$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+			$message .= "Your request to access the " . $project->title . " dataset has been received and forwarded to " . $project_lead->field_full_name['und'][0]['value'] . ". You will receive another email after your access is approved.";		
+			$params = array('subject' => 'Request of Faculty Member to access Dataset','message' => $message);
+			$key = 'request-faculty';
+			$to .= ', ' .$project_lead->mail; 
+			$sent = TRUE;						
+		}else{
+			//Approval of Faculty Member to access Dataset
+			if($form['field_approved']['und']['#default_value'] != 1 && !empty($node->field_approved['und']) && $node->field_approved['und'][0]['value'] == 1){
+				//insert record into ipm_access_tcga_approve table 
+				assign_new_roles_insert_record_database($to, $node->field_name['und'][0]['value'], 'faculty');
+				email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $project_lead->field_full_name['und'][0]['value'], true);
+				
+				//send confirmation emails
+				$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+				$message .= "Your access to the " . $project->title . " dataset has been approved. You may access this data through the PGRR homepage at http://". $_SERVER['HTTP_HOST'] .". ";
+				$params = array('subject' => 'Approval of Faculty Member to access Dataset','message' => $message);
+				$sent = TRUE;
+				$key = 'request-approved-faculty';					
+			}
+			
+			//Remove access from faculty member
+			if($form['field_approved']['und']['#default_value'] == 1 && !empty($node->field_approved['und']) && $node->field_approved['und'][0]['value'] == 0){
+				//remove record from ipm_access_tcga_approve table
+				remove_new_roles_delete_record_database($to, 'faculty');
+				email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $project_lead->field_full_name['und'][0]['value'], false);
+				
+				//send confirmation emails
+				$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+				$message .= "Your access to the " . $project->title . " dataset has been revoked. "
+				. "You will no longer be able to access this dataset. If this request is in error, please contact " . $project_lead->field_full_name['und'][0]['value'] . ".";
+				$params = array('subject' => 'Removal of faculty to access dataset','message' => $message);
+				$sent = TRUE;
+				$key = 'request-revoked-faculty';				
+			}						
+		}
+		
+		if($sent == TRUE){
+			//drupal_mail() will call the hook_mail() witch is ipm_mail() in this module to get email setting info
+			//from and signature is set in ipm_mail book
+			$result = drupal_mail($module, $key, $to, $language, $params, '', $sent);
+			if ($result['result'] == TRUE) {
+				drupal_set_message(t('Your message has been sent to %emailaddress.', array('%emailaddress'=> $to)));	
+			}
+			else {
+				drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
+			}
+		}
+	}
+	
+	//Content type: TCGA Member (student/staff/scholar)
+	if ($node->type == 'tcga_member_not_pi') {
+		//sending email confirmation
+		$sent = FALSE;
+		$language = language_default();
+		$module = 'ipm';
+		$to = $node->field_email["und"][0]["email"];
+		$project = node_load($node->field_project["und"][0]["nid"]);
+		$pi = user_load($node->field_pi['und'][0]['uid']);
+		$project_lead = user_load($project->field_group_lead["und"][0]['uid']);
+		
+		if(!isset($node->nid)){
+			//Request of Faculty Member to access Dataset					
+			$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+			$message .= $pi->field_full_name['und'][0]['value'] . " has requested access for you to the " . $project->title . " dataset. "
+					. "The request has been received and forwarded to  " . $project_lead->field_full_name['und'][0]['value'] . ". "
+					. "You will receive another email after your access is approved. ";
+			$params = array('subject' => 'Request of Student/ Staff to access Dataset','message' => $message);		
+			//email pi
+			$to .= ', ' . $pi->mail;			
+			//email project lead
+			$to .= ', ' . $project_lead->mail;		
+			$key = 'request-student';
+			$sent = TRUE;
+		}else{
+			//Approval of Faculty Member to access Dataset
+			if($form['field_approved']['und']['#default_value'] != 1 && !empty($node->field_approved['und']) && $node->field_approved['und'][0]['value'] == 1){
+				//insert record into ipm_access_tcga_approve table 
+				assign_new_roles_insert_record_database($to, $node->field_name['und'][0]['value'], 'student');
+				email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $project_lead->field_full_name['und'][0]['value'], true);
+				
+				//send confirmation emails
+				$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+				$message .= "Access for you to the " . $project->title . " dataset has been approved. You may access this data through the PGRR homepage at http://". $_SERVER['HTTP_HOST'] .". ";
+				$params = array('subject' => 'Approval of Student/ Staff to access Dataset','message' => $message, 'headers' => array('cc' => $pi->mail));
+				$key = 'request-approved-stduent';				
+				//email pi
+				$to .= ', ' . $pi->mail;				
+				$sent = TRUE;				
+			}
+			
+			//Remove access from faculty member
+			if($form['field_approved']['und']['#default_value'] == 1 && !empty($node->field_approved['und']) && $node->field_approved['und'][0]['value'] == 0){
+				//Remove access from faculty member
+				remove_new_roles_delete_record_database($to, 'student');
+				email_help_desk($node->field_name['und'][0]['value'], $to, $project->title, $project_lead->field_full_name['und'][0]['value'], false);
+				
+				//send confirmation emails
+				$message = "Dear " . $node->field_name['und'][0]['value'] . ", \n\n";
+				$message .= "Your access to the " . $project->title . " dataset has been revoked. " 
+						. "You will no longer be able to access this dataset. If this request is in error, please ask your supervising faculty member to request access for you again.";
+				$params = array('subject' => 'Removal of Student/ Staff to access dataset','message' => $message);				
+				//email pi
+				$to .= ', ' . $pi->mail;
+				$key = 'request-revoked-stduent';
+				$sent = TRUE;				
+			}
+		}
+		
+		if($sent == TRUE){
+			//drupal_mail() will call the hook_mail() witch is ipm_mail() in this module to get email setting info
+			//from and signature is set in ipm_mail book
+			$result = drupal_mail($module, $key, $to, $language, $params, '', $sent);
+			if ($result['result'] == TRUE) {
+				drupal_set_message(t('Your message has been sent to %emailaddress.', array('%emailaddress'=>$to)));
+			}
+			else {
+				drupal_set_message(t('There was a problem sending your message and it was not sent.'), 'error');
+			}
+		}
+	}
+}
+
+function ipm_mail($key, &$message, $params) {
+	if($key == "html-email"){
+		$message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
+	}
+	$message['subject'] = $params['subject'];
+	$message['from'] = variable_get('site_mail', 'pgrr@ppitt.edu');
+	$message['body'][] = $params['message'] . email_signature();
+}
+
+function email_help_desk($username, $useremail, $dataset, $by, $approved){	
+	if($approved){
+		$text = "approved";
+	}else{
+		$text = "revoked";
+	}
+	
+	$language = language_default();
+	$module = 'ipm';
+	$to = "jbz2@pitt.edu, guzman@pitt.edu";
+	$message = "An Account for " . $username . "<". $useremail . "> to " . $dataset ." has been " . $text . " by " . $by . ". ";
+	$params = array('subject' => 'Institute for Personalized Medicine','message' => $message);
+	$sent = TRUE;
+	$result = drupal_mail($module, '', $to, $language, $params, '', $sent);
+}
+
+function remove_new_roles_delete_record_database($email, $type){
+	$user = user_load_by_mail($email);
+	if(isset($user) && $user != false){
+		if($type == 'faculty'){
+			$role = 'TCGA PI';
+		}else{
+			$role = 'TCGA Member';
+		}
+		$roles = user_roles(TRUE);
+		$rid = array_search($role, $roles);
+		if ($rid != FALSE) {
+			unset($user->roles[$rid]);
+			user_save($user);
+		}
+	}
+
+	//remove a record from a ipm_access_tcga_approved
+	$deleted = db_delete('ipm_access_tcga_approved')
+	->condition('email', $email)
+	->condition('type', $type)
+	->execute();
+}
+
+function assign_new_roles_insert_record_database($email, $name, $type){
+	$user = user_load_by_mail($email);
+	if(isset($user) && $user != false){
+		if($type == 'faculty'){
+			$role = 'TCGA PI';
+		}else{
+			$role = 'TCGA Member';
+		}
+		$roles = user_roles(TRUE);
+		$rid = array_search($role, $roles);
+		if ($rid != FALSE) {
+			$user->roles[$rid] = $role;
+			$user->field_full_name['und'][0]['value'] = $name;
+			user_save($user);
+		}		
+	}
+	
+	//insert a record into a ipm_access_tcga_approved
+	$data = db_insert('ipm_access_tcga_approved')
+	->fields(array(
+		'email' => $email,
+		'name' => $name,
+		'type' => $type,
+	))->execute();
+	
+}
+
+function email_signature (){
+	$output = "\n \n \n System Administrator,";
+	$output .= "\n Pittsburgh Genome Research Repository";
+	return $output;
+}
+
+function ipm_menu()
+{
+	$items = array();
+	$items['my-notifications'] = array(
+	  'title' => 'My notifications',
+	  'description' => 'My notifications',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('my_notifications_form'),
+	  'access callback' => 'tcga_members_access',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'my-notifications.page.inc',
+	);
+	
+	$items['my-notifications-subscribe-ajax'] = array(
+		'title' => 'My notifications Subscribe Web Services',
+		'description' => 'My notifications Subscribe Web Services',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('my_notifications_subscribe_ajax_form'),
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'my-notifications.page.inc',
+	);
+	
+	$items['my-notifications-unsubscribeall-ajax'] = array(
+		'title' => 'My notifications unSubscribe Web Services',
+		'description' => 'My notifications unSubscribe Web Services',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('my_notifications_unsubscribeall_ajax_form'),
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'my-notifications.page.inc',
+	);
+	
+	$items['tcga-data'] = array(
+		'title' => 'TCGA',
+		'description' => 'TCGA Data',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('tcga_details_form'),
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'tcga.page.inc',			
+	);
+
+	$items['admin/config/ipm'] = array(
+		'title' => 'Instistute for Personalized Medicine',
+		'description' => 'Site settings',
+		'position' => 'right',
+		'weight' => 2,
+		'page callback' => 'system_admin_menu_block_page',
+		'access arguments' => array('access administration pages'),
+		'file' => 'system.admin.inc',
+		'file path' => drupal_get_path('module', 'system'),
+	);
+	
+	$items['admin/config/ipm/ws-server'] = array(
+		'title' => 'Site settings',
+		'description' => 'Web Services Server for SPARQL Query.',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('ipm_settings_form'),
+		'access arguments' => array('administer site configuration'),
+		'file' => 'ipm.admin.inc',
+	);
+	
+	$items['search-repository'] = array(
+		'title' => 'Search Repository',
+		'description' => 'Search Repository.',
+		'page callback' => 'search_repository_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'search-repository.page.inc',
+	);
+	
+	$items['search-repository-download'] = array(
+		'title' => '',
+		'description' => 'Search Repository Download',
+		'page callback' => 'search_repository_download_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'search-repository.page.inc',
+	);
+	
+// 	$items['search-repository-old/%'] = array(
+// 		'title' => 'Search Repository',
+// 		'description' => 'Search Repository.',
+// 		'page callback' => 'search_repository_old_page',
+// 		'page arguments' => array(1),
+// 		'access callback' => 'tcga_members_access',
+// 		'type' => MENU_CALLBACK,
+// 		'file' => 'search-repository-old.page.inc',
+// 	);
+	
+// 	$items['search-repository-old/search-repository-submit-old'] = array(
+// 		'title' => 'Search Repository Results',
+// 		'description' => 'Search Repository Results.',
+// 		'page callback' => 'drupal_get_form',
+// 		'page arguments' => array('search_repository_old_submit_form'),
+// 		'access callback' => 'tcga_members_access',
+// 		'type' => MENU_CALLBACK,
+// 		'file' => 'search-repository-old.page.inc',
+// 	);
+		
+	$items['go-index'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_index_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);
+	
+	$items['go-workflow-examples'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_workflow_examples_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);
+	$items['go-video-tutorials'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_video_tutorials_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);
+	$items['go-text-documentation'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_text_documentation_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);
+	$items['go-contact-us'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_contact_us_page',
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);			
+	
+	$items['go-form-submit/%'] = array(
+		'title' => '',
+		'description' => 'GO index page.',
+		'page callback' => '_GO_form_submit',
+		'page arguments' => array(1),
+		'access callback' => 'tcga_members_access',
+		'type' => MENU_CALLBACK,
+		'file' => 'genom-oncology.page.inc',
+	);
+	
+	return($items);
+}
+
+/**
+ * Implements hook_theme()
+ */
+function ipm_theme($existing, $type, $theme, $path) {
+	return array(
+		'my_notifications_form' => array(
+			'render element' => 'form',
+			'template' => 'my-notifications',
+			'path' => drupal_get_path('module', 'ipm'),
+		),
+	);
+}
+
+function tcga_members_access(){
+	global $user;
+	if(in_array('administrator', $user->roles) || in_array('TCGA PI', $user->roles) || in_array('TCGA Project Lead', $user->roles) || in_array('TCGA Member', $user->roles)){
+		return true;
+	}
+	return false;
+}
+
+
+function ipm_page_alter(&$page) {
+	global $user;
+	//$_GET['q'] == 'tcga' || $_GET['q'] == 'node/10' || 
+	if ($_GET['q'] == 'tcga-data' ) {
+		if(isset($_SESSION['agree-tcga-user-code']) && $_SESSION['agree-tcga-user-code'] && 
+		(in_array('TCGA Project Lead', $user->roles) || in_array('TCGA PI', $user->roles) || in_array('TCGA Member', $user->roles) || in_array('administrator', $user->roles))){
+			$search_box = drupal_get_form('tcga_data_form');
+			$page['sidebar_first']['ipm_tcga_details_form'] = $search_box;
+		}
+	}
+}
+
+/**
+ * Implements hook_block_info()
+ */
+function ipm_block_info() {
+	$blocks['search-repository-diseases'] = array(
+		'info' => t('Search Repository Diseases'),
+		'cache' => DRUPAL_CACHE_GLOBAL,
+	);
+	
+	$blocks['search-repository-filters'] = array(
+		'info' => t('Search Repository Filters'),
+		'cache' => DRUPAL_CACHE_GLOBAL,
+	);
+
+	return $blocks;
+}
+
+/**
+ * Implements hook_block_view()
+ */
+function ipm_block_view($delta = '') {
+	$block = array();
+
+	switch ($delta) {
+		case 'search-repository-diseases':
+			//search-repository-old.page.inc
+			$block['content'] = _get_search_repository_diseases();
+			break;
+		case 'search-repository-filters':
+			//search-repository.page.inc
+			$block['content'] = _get_search_repository_filters();
+			break;
+	}
+	return $block;
+}
+
+
+
+
+

@@ -1,0 +1,15 @@
+============================ 03/31/2014 (done on local)====================================
+//security updates, no database updates are required
+drush pm-update
+
+1. svn up at root
+2. enable IPM themes
+3. Add "Access denied" and "Page not found" pages
+4. Change "Site configuration" here /admin/config/system/site-information
+5. add a field "Data Page" to "project" content type
+6. edit TCGA page, enter information for "Data page" field
+7. in front page, edit view, add a field "data page" to the view
+8. Add "Genom Oncology Application" page
+9. change GO documentation and application path at TCGA page
+10.In training page, "GO user manual and videos" link block
+11.Remove "TCGA Data" from the main menu

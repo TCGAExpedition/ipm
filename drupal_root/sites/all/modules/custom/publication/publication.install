@@ -1,0 +1,301 @@
+<?php
+/**
+ * The PGRR portal is a resource for sharing genomic data in a resource community.
+ * Copyright (C) 2015  University of Pittsburgh
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
+// $Id: fb_publication.install 16749 2011-05-05 20:18:03Z pitt\sss53 $
+
+/**
+ * Implements hook_install()
+ */
+function publication_install() {
+	if (! in_array ( 'publication', node_type_get_names () )) {
+		$t = get_t ();
+		$info = array (
+				'type' => 'publication',
+				'name' => $t ( 'Publication' ),
+				'base' => 'node_content',
+				'description' => $t ( 'Create publications with PubMed identifiers.' ) 
+		);
+		$pub = node_type_set_defaults ( $info );
+		//node_add_body_field ( $pub );
+		node_type_save ( $pub );
+		variable_set('comment_publication', COMMENT_NODE_CLOSED);
+		
+		foreach (_publication_fields() as $field){
+			field_create_field($field);
+		}
+		foreach (_publication_instances() as $instance){
+			$instance['entity_type'] = 'node';
+			$instance['bundle'] = $info['type'];
+			field_create_instance($instance);
+		}
+	}
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function publication_uninstall() {
+	// delete variables
+	
+	// delete nodes
+	$nodes = db_select ( 'node', 'n' )->fields ( 'n', array (
+			'nid' 
+	) )->condition ( 'type', 'publication' )->execute ()->fetchAll ();
+	
+	$nids = array_map ( function ($n) {
+		return $n->nid;
+	}, $nodes );
+	node_delete_multiple ( $nids );
+	node_type_delete ( 'publication' );
+	// field_purge_batch(1000);
+	foreach (array_keys(_publication_fields()) as $field){
+		field_delete_field($field);
+	}
+}
+
+/**
+ * _publication_fields
+ *
+ * @access protected
+ * @return array
+ */
+function _publication_fields() {
+	return array (
+			'field_publication_pmid' => array (
+					'field_name' => 'field_publication_pmid',
+					'cardinality' => 1,
+					'type' => 'text',
+					'settings' => array (
+							'max_length' => 60 
+					) 
+			),
+			'field_publication_journal' => array (
+					'field_name' => 'field_publication_journal',
+					'cardinality' => 1,
+					'type' => 'text' 
+			),
+			'field_publication_date' => array (
+					'field_name' => 'field_publication_date',
+					'type' => 'date',
+					'cardinality' => 1,
+					'settings' => array (
+							'granularity' => array (
+									'year',
+									'month',
+									'day' 
+							) 
+					) 
+			),
+			'field_publication_date_display' => array (
+					'field_name' => 'field_publication_date_display',
+					'type' => 'text',
+					'cardinality' => 1 
+			),
+			'field_publication_volume' => array (
+					'field_name' => 'field_publication_volume',
+					'type' => 'text',
+					'cardinality' => 1,
+					'settings' => array (
+						'max_length' => 60 
+					) 
+			),
+			'field_publication_issue' => array (
+					'field_name' => 'field_publication_issue',
+					'type' => 'text',
+					'cardinality' => 1,
+					'settings' => array (
+						'max_length' => 60 
+					) 
+			),
+			'field_publication_pagination' => array (
+					'field_name' => 'field_publication_pagination',
+					'type' => 'text',
+					'cardinality' => 1,
+					'settings' => array (
+						'max_length' => 60 
+					) 
+			),
+			'field_publication_authors' => array (
+					'field_name' => 'field_publication_authors',
+					'type' => 'text',
+					'cardinality' => 1,
+					'settings' => array (
+							'max_length' => 500
+					)
+			),
+			'field_publication_url' => array (
+					'field_name' => 'field_publication_url',
+					'type' => 'link_field',
+					'cardinality' => 1
+			)
+	  );
+}
+
+function _publication_instances() {
+	$t = get_t ();
+	
+	return array (
+			//existing field
+			'field_project' => array(
+			    "field_name"=>"field_project",
+			    "label"=>"Project",
+			    "type"=>"node_reference",
+			    "widget"=>array(
+			      	"type"=>"options_select",
+			    	'weight' => - 3 
+			    )
+			 ),
+			'field_publication_pmid' => array (
+					'field_name' => 'field_publication_pmid',
+					'label' => $t ( 'PubMed ID (PMID)' ),
+					'widget' => array (
+							'type' => 'text_textfield',
+							'weight' => - 1 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 7 
+							) 
+					) 
+			),
+			'field_publication_journal' => array (
+					'field_name' => 'field_publication_journal',
+					'label' => $t ( 'Journal' ),
+					'widget' => array (
+							'type' => 'text_textfield' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 1 
+							) 
+					) 
+			),
+			'field_publication_date' => array (
+					'field_name' => 'field_publication_date',
+					'label' => $t ( 'Publication date (data)' ),
+					'widget' => array (
+							'type' => 'date_text',
+							'settings' => array (
+									'input_format_custom' => 'Y M j' 
+							) 
+					),
+					'settings' => array (
+							'default_value' => 'blank' 
+					),
+					'display' => array (
+							'default' => array (
+									'type' => 'hidden' 
+							) 
+					) 
+			),
+			'field_publication_date_display' => array (
+					'field_name' => 'field_publication_date_display',
+					'label' => $t ( 'Publication date' ),
+					'description' => $t ( 'Pubmed format e.g. 1998 Dec' ),
+					'widget' => array (
+							'type' => 'text_textfield' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 3 
+							) 
+					) 
+			),
+			'field_publication_volume' => array (
+					'field_name' => 'field_publication_volume',
+					'label' => $t ( 'Volume' ),
+					'widget' => array (
+							'type' => 'text_textfield' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 2 
+							) 
+					) 
+			),
+			'field_publication_issue' => array (
+					'field_name' => 'field_publication_issue',
+					'label' => $t ( 'Issue' ),
+					'widget' => array (
+							'type' => 'text_textfield' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 6 
+							) 
+					) 
+			),
+			'field_publication_pagination' => array (
+					'field_name' => 'field_publication_pagination',
+					'label' => $t ( 'Pagination' ),
+					'widget' => array (
+							'type' => 'text_textfield' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 5 
+							) 
+					) 
+			),
+			'field_publication_authors' => array (
+					'field_name' => 'field_publication_authors',
+					'label' => $t ( 'Author(s)' ),
+					'display' => array (
+							'full' => array (
+									'type' => 'text_default',
+									'label' => 'inline',
+									'weight' => 7
+							)
+					)
+			),
+			'field_publication_url' => array (
+					'field_name' => 'field_publication_url',
+					'label' => $t ( 'URL' ),
+					'settings' => array (
+							'title' => 'optional',
+							//'title_value' => 'PubMed',
+							'attributes' => array (
+									'target' => LINK_TARGET_NEW_WINDOW 
+							) 
+					),
+					'widget' => array (
+							'type' => 'link_field' 
+					),
+					'display' => array (
+							'full' => array (
+									'type' => 'default',
+									'label' => 'inline',
+									'weight' => 8 
+							) 
+					) 
+			)
+	);
+}

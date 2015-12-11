@@ -1,0 +1,12 @@
+name = Import Publication
+description = Provide a publication content type
+package = IPM			
+dependencies[] = link
+dependencies[] = date
+dependencies[] = node_reference
+files[] = publication.install
+files[] = EntrezClient.php
+files[] = EntrezPubmedArticle.php
+
+core = 7.x
+version = "7.x-1.0"

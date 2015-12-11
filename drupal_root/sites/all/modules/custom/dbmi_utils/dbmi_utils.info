@@ -1,0 +1,10 @@
+;$Id$
+
+name = DBMI Utilities
+description = Module for Department of Biomedical Informatics.
+package = Department of Biomedical Informatics
+core = 7.x
+files[] = dbmi_utils.module
+
+;dependencies[] = autoload
+;php = 5.3

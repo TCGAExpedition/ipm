@@ -1,0 +1,54 @@
+Server requirements:
+1. install php, mysql
+2. make sure php5-ldap and php5-curl are installed
+
+Drupal Code:
+The code is under Drupal_Websites/ipm/drupal_root
+
+Database:
+The database dump is ipm_1_10_2014.sql under Drupal_Websites/ipm/trunk/Admin
+
+Setting up drupal site:
+1. Check out the code in Drupal_Websites/ipm/drupal_root to a directory (e.g. ipm)
+2. Dump the database: mysql -h localhost -u username ipm_databasename -p < ipm_1_10_2014.sql
+3. Chmod -R 777 /sites/default/files
+4. Change the database settings in /sites/default/setting.php file
+
+Setting up Web services:
+1. make sure the sserver can connect to "web-dev01.dbmi.pitt.edu"
+2. install apache tomcat (I have apache-tomcat-7.0.27 on my local; make sure $CATALINA_HOME is set and pointed to the apache tomcat directory)
+3. install ant (I have Apache Ant(TM) version 1.8.2 on my local VM)
+4. The web services code is under svn01.dbmi.pitt.edu/svn/ipm-ws, check out the code
+5. sudo su -
+6. In ipm-ws directory, run "ant clean-deploy" (if it's sucessfully built, you will see "Build successful")
+7. start Tomcat (e.g. run "/usr/local/apache-tomcat-7.0.47/bin/startup.sh" or "$CATALINA_HOME/bin/startup.sh")
+
+Notes:
+1. /drupal_root/modules/user/user.module is changed.
+      //form_set_error('name', t('Sorry, unrecognized username or password. <a href="@password">Have you forgotten your password?</a>', array('@password' => url('user/password', array('query' => array('name' => $form_state['values']['name']))))));
+    	form_set_error('name', t('Sorry, unrecognized username or password.'));
+When we do security updates, this change will need to be added again.
+
+2. edit bartik_process_page() in drupal_root/themes/bartik/template.php
+
+
+==========================  02/10/2014 (done)==================================
+make changes to: (02/10/2014) (done on stage.pgrr.pitt.edu on 02/12/2014)
+ipm.info
+ipm.module
+ipm.admin.inc
+themes/bartik/template.php
+ 
+==========================  02/20/2014 (done)===================================
+ svn up /modules/custome/publication
+ enable the module
+ permission settings: PI, Project lead, Project member (create/edit/delete own publication content)
+ add links to publications (TCGA)
+ add new field to "project": "Instructions for Submitting Publications"
+  
+============================ 03/12/2014 (done)====================================
+drupal_root/themes/bartik/logo.png
+
+ 
+ 
+ 
